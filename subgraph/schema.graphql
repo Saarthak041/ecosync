@@ -1,0 +1,83 @@
+type CarbonCreditToken @entity {
+  id: ID!
+  tokenId: BigInt!
+  projectId: String!
+  vintage: String!
+  serialNumber: String!
+  registry: String!
+  metadataURI: String!
+  issuer: Bytes!
+  issuanceDate: BigInt!
+  totalSupply: BigInt!
+  isRetired: Boolean!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+  
+  # Relations
+  transfers: [TransferEvent!]! @derivedFrom(field: "token")
+  retirements: [RetirementEvent!]! @derivedFrom(field: "token")
+  balances: [TokenBalance!]! @derivedFrom(field: "token")
+}
+
+type TransferEvent @entity {
+  id: ID!
+  token: CarbonCreditToken!
+  from: Bytes!
+  to: Bytes!
+  quantity: BigInt!
+  operator: Bytes!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  logIndex: BigInt!
+}
+
+type RetirementEvent @entity {
+  id: ID!
+  token: CarbonCreditToken!
+  retiree: Bytes!
+  quantity: BigInt!
+  reason: String!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  logIndex: BigInt!
+}
+
+type TokenBalance @entity {
+  id: ID!
+  token: CarbonCreditToken!
+  owner: Bytes!
+  balance: BigInt!
+  lastUpdated: BigInt!
+}
+
+type Issuer @entity {
+  id: ID!
+  address: Bytes!
+  isActive: Boolean!
+  totalIssued: BigInt!
+  tokensIssued: [CarbonCreditToken!]! @derivedFrom(field: "issuer")
+  grantedAt: BigInt!
+}
+
+type DailyStats @entity {
+  id: ID!
+  date: String!
+  totalIssuance: BigInt!
+  totalRetirements: BigInt!
+  totalTransfers: BigInt!
+  activeTokens: BigInt!
+  uniqueHolders: BigInt!
+}
+
+type GlobalStats @entity {
+  id: ID!
+  totalTokensIssued: BigInt!
+  totalSupply: BigInt!
+  totalRetired: BigInt!
+  totalTransfers: BigInt!
+  uniqueHolders: BigInt!
+  activeIssuers: BigInt!
+  lastUpdated: BigInt!
+}

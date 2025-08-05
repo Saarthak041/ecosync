@@ -1,0 +1,40 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: CarbonCredit
+    network: polygon
+    source:
+      address: "0x..." # Your deployed contract address
+      abi: CarbonCredit
+      startBlock: 0 # Block number when contract was deployed
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CarbonCreditToken
+        - TransferEvent
+        - RetirementEvent
+        - TokenBalance
+        - Issuer
+        - DailyStats
+        - GlobalStats
+      abis:
+        - name: CarbonCredit
+          file: ./abis/CarbonCredit.json
+      eventHandlers:
+        - event: CreditIssued(indexed uint256,indexed address,indexed address,uint256,string,string)
+          handler: handleCreditIssued
+        - event: CreditRetired(indexed uint256,indexed address,uint256,string)
+          handler: handleCreditRetired
+        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleTransferSingle
+        - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])
+          handler: handleTransferBatch
+        - event: MetadataUpdated(indexed uint256,string)
+          handler: handleMetadataUpdated
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleGranted
+      file: ./src/carbon-credit.ts

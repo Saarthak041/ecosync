@@ -1,0 +1,17 @@
+{
+  "name": "ecosync-carbon-credits-subgraph",
+  "version": "1.0.0",
+  "description": "The Graph subgraph for Ecosync carbon credits",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ ecosync/carbon-credits",
+    "create-local": "graph create --node http://localhost:8020/ ecosync/carbon-credits",
+    "remove-local": "graph remove --node http://localhost:8020/ ecosync/carbon-credits",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 ecosync/carbon-credits"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.56.0",
+    "@graphprotocol/graph-ts": "0.30.0"
+  }
+}
