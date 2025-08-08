@@ -27,6 +27,7 @@ app.use('/api/credits', require('./routes/credits'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/issuers', require('./routes/issuers'));
 app.use('/api/metadata', require('./routes/metadata'));
+app.use('/api/blockchain', require('./routes/blockchain'));
 
 // Health check
 app.get('/health', (req, res) => {

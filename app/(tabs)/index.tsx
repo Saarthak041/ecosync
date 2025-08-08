@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } fr
 import GradientBackground from '@/components/GradientBackground';
 import StatsCard from '@/components/StatsCard';
 import Card from '@/components/Card';
+import WalletSetupHelper from '@/components/WalletSetupHelper';
 import { Leaf, Car, Utensils, TrendingDown, Award, Plus } from 'lucide-react-native';
 import { TripData, MealData } from '@/types/carbonData';
 import { getTrips, getMeals } from '../../utils/storage';
@@ -239,6 +240,10 @@ export default function Dashboard() {
               </View>
             </Card>
           </View>
+          
+          {/* Wallet Setup Helper - Temporary for Ethereum deployment */}
+          <WalletSetupHelper />
+          
         </ScrollView>
       </SafeAreaView>
     </GradientBackground>

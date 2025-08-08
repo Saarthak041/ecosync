@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Goal } from '../types/carbonData';
 import { Target, Check, Trash2 } from 'lucide-react-native';
+import { shadowPresets } from '../utils/shadowUtils';
 
 interface GoalCardProps {
   goal: Goal;
@@ -136,14 +137,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadowPresets.medium,
   },
   completedContainer: {
     backgroundColor: '#F9FAFB',

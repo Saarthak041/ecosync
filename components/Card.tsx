@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
+import { shadowPresets } from '../utils/shadowUtils';
 
 interface CardProps {
   children: React.ReactNode;
@@ -20,13 +21,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadowPresets.medium,
   },
 });

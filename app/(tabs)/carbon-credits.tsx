@@ -4,14 +4,18 @@ import { Leaf, Wallet, ArrowUpRight, ArrowDownLeft, RefreshCw, Trash2, X } from 
 import Card from '@/components/Card';
 import { useWallet } from '@/components/WalletConnectProvider';
 import carbonCreditService, { CarbonCredit, CarbonTransaction } from '@/services/carbonCreditService';
+import { initializeMockData, mockCarbonCredits, mockTransactions } from '@/utils/mockData';
+import { shadowPresets } from '@/utils/shadowUtils';
 
 export default function CarbonCredits() {
   const { isConnected, address, provider, signer, connect, disconnect } = useWallet();
   const [credits, setCredits] = useState<CarbonCredit[]>([]);
   const [transactions, setTransactions] = useState<CarbonTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Changed to false initially
   const [selectedTab, setSelectedTab] = useState<'credits' | 'history'>('credits');
   const [refreshing, setRefreshing] = useState(false);
+  const [testModeEnabled, setTestModeEnabled] = useState(true);
+  const [testWalletConnected, setTestWalletConnected] = useState(false);
   
   // Transfer modal state
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -26,19 +30,45 @@ export default function CarbonCredits() {
   const [retireReason, setRetireReason] = useState('');
 
   useEffect(() => {
-    if (isConnected && address) {
+    if (testModeEnabled) {
+      // Initialize mock data for testing
+      initializeMockData();
+      console.log('🧪 Test mode enabled - using mock data');
+    }
+  }, [testModeEnabled]);
+
+  useEffect(() => {
+    // Load data when wallet is connected (real or test mode)
+    if ((isConnected && address) || (testModeEnabled && testWalletConnected)) {
       loadData();
-      if (provider && signer) {
+      if (provider && signer && !testModeEnabled) {
         carbonCreditService.initialize(provider, signer);
       }
     }
-  }, [isConnected, address, provider, signer]);
+  }, [isConnected, address, provider, signer, testModeEnabled, testWalletConnected]);
 
   const loadData = async (useCache = true) => {
-    if (!address) return;
-
+    console.log('📊 Loading carbon credits data...');
     setIsLoading(true);
+    
     try {
+      if (testModeEnabled) {
+        // Use mock data for testing - no address requirement
+        console.log('🧪 Loading mock data...');
+        setCredits(mockCarbonCredits);
+        setTransactions(mockTransactions);
+        console.log('✅ Loaded mock data:', mockCarbonCredits.length, 'credits');
+        setIsLoading(false);
+        return;
+      }
+
+      // Real blockchain data - requires address
+      if (!address) {
+        console.log('❌ No address available for blockchain data');
+        setIsLoading(false);
+        return;
+      }
+
       // Try to load from cache first
       if (useCache) {
         const cachedData = await carbonCreditService.getCachedUserData(address);
@@ -54,9 +84,8 @@ export default function CarbonCredits() {
 
       await loadFreshData();
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('❌ Error loading carbon credits data:', error);
       Alert.alert('Error', 'Failed to load carbon credit data');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -216,6 +245,80 @@ export default function CarbonCredits() {
       .reduce((sum, credit) => sum + credit.quantity, 0);
   };
 
+  const handleConnectWallet = async () => {
+    try {
+      console.log('🔗 Attempting wallet connection...');
+      
+      if (testModeEnabled) {
+        // In test mode, simulate immediate connection WITHOUT calling real connect
+        console.log('🧪 Test mode: Simulating wallet connection');
+        
+        // Set test wallet as connected
+        setTestWalletConnected(true);
+        
+        // Simulate connection delay
+        setTimeout(() => {
+          console.log('✅ Mock wallet connected successfully');
+          Alert.alert('Success', 'Test wallet connected successfully!', [
+            { text: 'OK', onPress: () => {
+              // Load mock data after connection
+              loadData();
+            }}
+          ]);
+        }, 500);
+        
+        return; // Exit early - don't call real connect()
+      }
+      
+      // Only call real wallet connection when NOT in test mode
+      await connect();
+      Alert.alert('Success', 'Wallet connected successfully!');
+    } catch (error) {
+      console.error('❌ Wallet connection error:', error);
+      Alert.alert('Error', 'Failed to connect wallet. Please make sure you have MetaMask installed.');
+    }
+  };
+
+  const toggleTestMode = () => {
+    setTestModeEnabled(!testModeEnabled);
+    Alert.alert(
+      'Test Mode',
+      testModeEnabled ? 'Switched to live blockchain mode' : 'Switched to test mode with mock data',
+      [{ text: 'OK', onPress: () => loadData() }]
+    );
+  };
+
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  // Check if wallet is connected (real wallet or test mode)
+  const isWalletConnected = testModeEnabled ? testWalletConnected : isConnected;
+
+  if (!isWalletConnected) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.connectContainer}>
+          <Wallet size={80} color="#10B981" />
+          <Text style={styles.connectTitle}>Connect Your Wallet</Text>
+          <Text style={styles.connectSubtitle}>
+            Connect your Web3 wallet to view and manage your carbon credits
+          </Text>
+          <TouchableOpacity style={styles.connectButton} onPress={handleConnectWallet}>
+            <Text style={styles.connectButtonText}>Connect Wallet</Text>
+          </TouchableOpacity>
+          
+          {/* Test Mode Toggle */}
+          <TouchableOpacity style={styles.testModeButton} onPress={toggleTestMode}>
+            <Text style={styles.testModeButtonText}>
+              {testModeEnabled ? '🧪 Test Mode (Mock Data)' : '🔗 Live Mode'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (isLoading && credits.length === 0) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
@@ -246,26 +349,31 @@ export default function CarbonCredits() {
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.walletButton}
-              onPress={isConnected ? disconnect : connect}
+              onPress={isWalletConnected ? disconnect : handleConnectWallet}
             >
-              <Wallet size={24} color={isConnected ? "#10B981" : "#6B7280"} />
+              <Wallet size={24} color={isWalletConnected ? "#10B981" : "#6B7280"} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Wallet Status */}
         <View style={styles.walletStatus}>
-          {isConnected ? (
+          {isWalletConnected ? (
             <View style={styles.connectedWallet}>
               <Text style={styles.walletLabel}>Connected Wallet</Text>
               <Text style={styles.walletAddress}>
-                {address?.substring(0, 6)}...{address?.substring(address.length - 4)}
+                {testModeEnabled && testWalletConnected 
+                  ? formatAddress('0x742d35CC7C6B22C03e60CA5124DFC5A0A0f45F91')
+                  : address 
+                    ? formatAddress(address)
+                    : 'Not connected'
+                }
               </Text>
             </View>
           ) : (
             <TouchableOpacity 
               style={styles.connectWalletButton}
-              onPress={connect}
+              onPress={handleConnectWallet}
             >
               <Wallet size={18} color="#FFFFFF" />
               <Text style={styles.connectWalletText}>Connect Wallet</Text>
@@ -710,14 +818,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 4,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    ...shadowPresets.subtle,
   },
   statLabel: {
     fontSize: 14,
@@ -1039,5 +1140,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
+  },
+  connectContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#F9FAFB',
+  },
+  connectTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  connectSubtitle: {
+    fontSize: 16,
+    color: '#6B7280',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  connectButton: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+    marginTop: 30,
+  },
+  connectButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  testModeButton: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginTop: 20,
+  },
+  testModeButtonText: {
+    color: '#10B981',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

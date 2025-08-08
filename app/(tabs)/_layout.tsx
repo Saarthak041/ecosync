@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { ChartBar as BarChart3, Plus, Chrome as Home, Coins, User, Activity } from 'lucide-react-native';
+import { ChartBar as BarChart3, Plus, Chrome as Home, Coins, User, Activity, ShoppingCart } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -55,6 +55,15 @@ export default function TabLayout() {
           title: 'Trading',
           tabBarIcon: ({ size, color }) => (
             <Coins size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="trading-original"
+        options={{
+          title: 'Market',
+          tabBarIcon: ({ size, color }) => (
+            <ShoppingCart size={size} color={color} />
           ),
         }}
       />
