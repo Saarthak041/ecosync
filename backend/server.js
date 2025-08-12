@@ -27,6 +27,25 @@ app.use('/api/credits', require('./routes/credits'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/issuers', require('./routes/issuers'));
 app.use('/api/metadata', require('./routes/metadata'));
+app.use('/api/devices', require('./routes/devices'));
+app.use('/api/thermostat', require('./routes/thermostat'));
+
+app.get('/', (req, res) => {
+  res.json({
+    status: 'EcoSync API',
+    endpoints: {
+      devices: {
+        list: 'GET /api/devices',
+        create: 'POST /api/devices',
+        toggle: 'PATCH /api/devices/:id/toggle { isActive }'
+      },
+      thermostat: {
+        list: 'GET /api/thermostat',
+        set: 'PATCH /api/thermostat/:id { targetTemp }'
+      }
+    }
+  });
+});
 
 // Health check
 app.get('/health', (req, res) => {
