@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Modal, Alert } from 'react-native';
-import { Target, Plus, Settings } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Modal, Alert, Switch } from 'react-native';
+import { Target, Plus, Settings, LogOut, User, Bell, Palette, Globe } from 'lucide-react-native';
 import { Goal } from '../../types/carbonData';
 import { getGoals, saveGoal, updateGoal, deleteGoal } from '../../utils/storage';
 import GoalCard from '@/components/GoalCard';
 import AddGoalForm from '@/components/AddGoalForm';
+import { authService, User as AuthUser } from '@/services/authService';
 
 export default function Profile() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     loadGoals();
+    loadUserProfile();
   }, []);
 
   const loadGoals = async () => {
@@ -24,6 +27,15 @@ export default function Profile() {
       console.error('Error loading goals:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadUserProfile = async () => {
+    try {
+      const userProfile = await authService.loadProfile();
+      setUser(userProfile);
+    } catch (error) {
+      console.error('Error loading user profile:', error);
     }
   };
 
@@ -73,6 +85,47 @@ export default function Profile() {
     );
   };
 
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await authService.logout();
+              // The root layout will handle navigation back to auth
+            } catch (error) {
+              console.error('Error logging out:', error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handlePreferenceChange = async (key: string, value: any) => {
+    if (!user) return;
+    
+    try {
+      const updatedUser = await authService.updateProfile({
+        preferences: {
+          ...user.preferences,
+          [key]: value
+        }
+      });
+      setUser(updatedUser);
+    } catch (error) {
+      console.error('Error updating preference:', error);
+    }
+  };
+
   // Sort goals: active first, then by end date (closest first)
   const sortedGoals = [...goals].sort((a, b) => {
     if (a.isCompleted !== b.isCompleted) {
@@ -90,15 +143,87 @@ export default function Profile() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Personal Goals</Text>
+            <Text style={styles.title}>Profile</Text>
             <Text style={styles.subtitle}>
-              Set and track your carbon reduction goals
+              Manage your account and preferences
             </Text>
           </View>
-          <TouchableOpacity style={styles.settingsButton}>
-            <Settings size={24} color="#6B7280" />
+          <TouchableOpacity style={styles.settingsButton} onPress={handleLogout}>
+            <LogOut size={24} color="#EF4444" />
           </TouchableOpacity>
         </View>
+
+        {/* User Info */}
+        {user && (
+          <View style={styles.userSection}>
+            <View style={styles.userCard}>
+              <View style={styles.userAvatar}>
+                <User size={32} color="#10B981" />
+              </View>
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>{user.name}</Text>
+                <Text style={styles.userEmail}>{user.email}</Text>
+                <Text style={styles.userStats}>
+                  {user.stats.devicesCount} devices • {user.stats.totalEmissions.toFixed(1)} kg CO₂ saved
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Preferences */}
+        {user && (
+          <View style={styles.preferencesSection}>
+            <Text style={styles.sectionTitle}>Preferences</Text>
+            
+            <View style={styles.preferenceItem}>
+              <View style={styles.preferenceLeft}>
+                <Bell size={20} color="#6B7280" />
+                <Text style={styles.preferenceText}>Push Notifications</Text>
+              </View>
+              <Switch
+                value={user.preferences.notifications}
+                onValueChange={(value) => handlePreferenceChange('notifications', value)}
+                trackColor={{ false: '#E5E7EB', true: '#10B981' }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            <View style={styles.preferenceItem}>
+              <View style={styles.preferenceLeft}>
+                <Palette size={20} color="#6B7280" />
+                <Text style={styles.preferenceText}>Theme</Text>
+              </View>
+              <View style={styles.themeSelector}>
+                {(['light', 'dark', 'auto'] as const).map((theme) => (
+                  <TouchableOpacity
+                    key={theme}
+                    style={[
+                      styles.themeOption,
+                      user.preferences.theme === theme && styles.themeOptionActive
+                    ]}
+                    onPress={() => handlePreferenceChange('theme', theme)}
+                  >
+                    <Text style={[
+                      styles.themeOptionText,
+                      user.preferences.theme === theme && styles.themeOptionTextActive
+                    ]}>
+                      {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.preferenceItem}>
+              <View style={styles.preferenceLeft}>
+                <Globe size={20} color="#6B7280" />
+                <Text style={styles.preferenceText}>Language</Text>
+              </View>
+              <Text style={styles.preferenceValue}>{user.preferences.language.toUpperCase()}</Text>
+            </View>
+          </View>
+        )}
 
         {/* Add Goal Button */}
         <TouchableOpacity 
@@ -209,9 +334,105 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#FEF2F2',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  userSection: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  userCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  userAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#ECFDF5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  userStats: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#10B981',
+  },
+  preferencesSection: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-SemiBold',
+    color: '#1F2937',
+    marginBottom: 16,
+  },
+  preferenceItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  preferenceLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  preferenceText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#374151',
+    marginLeft: 12,
+  },
+  preferenceValue: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#6B7280',
+  },
+  themeSelector: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  themeOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+  },
+  themeOptionActive: {
+    backgroundColor: '#10B981',
+  },
+  themeOptionText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: '#6B7280',
+  },
+  themeOptionTextActive: {
+    color: '#FFFFFF',
   },
   addButton: {
     flexDirection: 'row',
@@ -232,12 +453,6 @@ const styles = StyleSheet.create({
   goalsSection: {
     paddingHorizontal: 20,
     marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#1F2937',
-    marginBottom: 16,
   },
   tipsCard: {
     backgroundColor: '#EFF6FF',

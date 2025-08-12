@@ -44,6 +44,45 @@ router.post('/', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// Create sample devices for testing
+router.post('/sample', async (req, res, next) => {
+  try {
+    const sampleDevices = [
+      {
+        name: 'Living Room Light',
+        location: 'Living Room',
+        type: 'light',
+        topicPath: 'ecosync/living-room/light1',
+        ratedWatts: 15
+      },
+      {
+        name: 'Kitchen Fan',
+        location: 'Kitchen',
+        type: 'fan',
+        topicPath: 'ecosync/kitchen/fan1',
+        ratedWatts: 75
+      },
+      {
+        name: 'Bedroom Light',
+        location: 'Bedroom',
+        type: 'light',
+        topicPath: 'ecosync/bedroom/light1',
+        ratedWatts: 12
+      },
+      {
+        name: 'Study Plug',
+        location: 'Study',
+        type: 'plug',
+        topicPath: 'ecosync/study/plug1',
+        ratedWatts: 0
+      }
+    ];
+
+    const createdDevices = await Device.insertMany(sampleDevices);
+    res.status(201).json({ devices: createdDevices });
+  } catch (err) { next(err); }
+});
+
 // Toggle a device on/off
 router.patch('/:id/toggle', async (req, res, next) => {
   try {
