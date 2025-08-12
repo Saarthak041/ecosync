@@ -6,10 +6,11 @@ export interface Device {
   _id: string;
   name: string;
   location: string;
-  type: 'light' | 'plug' | 'thermostat' | 'other';
+  type: 'light' | 'plug' | 'fan' | 'other';
   isOnline: boolean;
   isActive: boolean;
   energyUsage?: string;
+  ratedWatts?: number;
 }
 
 export async function listDevices(): Promise<Device[]> {
@@ -22,7 +23,4 @@ export async function toggleDevice(id: string, isActive: boolean): Promise<Devic
   return res.data.device;
 }
 
-export async function setThermostat(id: string, targetTemp: number): Promise<Device> {
-  const res = await axios.patch(`${API_URL}/thermostat/${id}`, { targetTemp });
-  return res.data.device;
-}
+// Thermostat removed in this hardware scope
