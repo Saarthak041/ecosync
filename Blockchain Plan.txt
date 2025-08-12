@@ -1,0 +1,44 @@
+ blockchain-based carbon credit trading feature into my React Native app (Ecosync) for both peer-to-peer and industrial use cases.
+
+Here are the requirements and the stack I want to use:
+
+--- ### Objective:
+Build a smart contract + backend + React Native integration that allows:
+
+Carbon credit issuance (minting by authorized verifier)
+Peer-to-peer and industrial carbon credit transfers
+Carbon credit retirement (burn) with proof
+Wallet integration using WalletConnect
+Metadata standards linking to real-world registry data (project ID, vintage, serial number)
+Future compatibility with Verra, Toucan, KlimaDAO, or similar bridges
+--- ### Tech Stack:
+Smart Contract
+
+Platform: Polygon PoS
+Language: Solidity
+Token Standard: ERC-1155
+Libraries: OpenZeppelin Contracts
+Framework: Hardhat
+Backend
+
+Language: Node.js
+Blockchain Lib: ethers.js
+Database: MongoDB or PostgreSQL
+Indexing: The Graph (subgraph to query on-chain events)
+Off-chain File Storage: IPFS
+React Native
+
+Blockchain Lib: ethers.js or viem
+Wallet Integration: WalletConnect v2
+Session Management: @react-native-async-storage/async-storage
+API: REST or GraphQL
+--- ### Output Required:
+ERC-1155 Smart Contract with roles (issuer, verifier, user), mint, transfer, and burn logic.
+Backend services to:
+Authorize issuers
+Interact with the contract via ethers.js
+Query The Graph or contract directly for user balances & transaction history
+Connect to IPFS for storing metadata (PDF certificates, project info)
+React Native integration setup with WalletConnect and contract interaction templates.
+A subgraph definition to index on-chain data (carbon tokens, transfers, retirements).
+Optional: Suggestions to bridge or sync with real-world carbon registries (Verra, Toucan, etc.)
