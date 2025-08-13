@@ -8,8 +8,21 @@
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
-  "include": ["./test", "./scripts"],
-  "files": ["./hardhat.config.ts"]
+  "include": [
+    "./test",
+    "./scripts",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
+  "files": [
+    "./hardhat.config.ts"
+  ],
+  "extends": "expo/tsconfig.base"
 }
+
