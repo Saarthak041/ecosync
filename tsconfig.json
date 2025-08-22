@@ -5,14 +5,15 @@
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "customConditions": ["development", "browser"]
   },
   "include": [
     "./test",
