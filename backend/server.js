@@ -28,6 +28,27 @@ app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/issuers', require('./routes/issuers'));
 app.use('/api/metadata', require('./routes/metadata'));
 app.use('/api/blockchain', require('./routes/blockchain'));
+app.use('/api/devices', require('./routes/devices'));
+app.use('/api/schedules', require('./routes/schedules'));
+app.use('/api/notifications', require('./routes/notifications'));
+
+// Root route for API discovery
+app.get('/', (req, res) => {
+  res.json({
+    status: 'EcoSync API',
+    endpoints: {
+      devices: {
+        list: 'GET /api/devices',
+        create: 'POST /api/devices',
+        toggle: 'PATCH /api/devices/:id/toggle { isActive }'
+      },
+      thermostat: {
+        list: 'GET /api/thermostat',
+        set: 'PATCH /api/thermostat/:id { targetTemp }'
+      }
+    }
+  });
+});
 
 // Health check
 app.get('/health', (req, res) => {
@@ -48,8 +69,30 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
+const httpServer = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  // Start scheduler after server starts
+  try {
+    const scheduler = require('./services/scheduler');
+    scheduler.reloadAll();
+    console.log('Scheduler initialized');
+  } catch (e) {
+    console.error('Failed to start scheduler', e);
+  }
+  try {
+    require('./services/firebase').init();
+  } catch (e) {
+    console.error('Failed to init firebase', e);
+  }
 });
+
+// Initialize WebSocket (Socket.IO)
+try {
+  const { init } = require('./services/realtime');
+  init(httpServer, process.env.CORS_ORIGIN || '*');
+  console.log('Realtime initialized');
+} catch (e) {
+  console.error('Failed to init realtime', e);
+}
 
 module.exports = app;
