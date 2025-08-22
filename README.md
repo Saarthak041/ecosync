@@ -119,7 +119,7 @@ npm run dev
 ```env
 PRIVATE_KEY=your_private_key
 POLYGON_RPC_URL=https://polygon-rpc.com
-MUMBAI_RPC_URL=https://rpc-mumbai.maticvigil.com
+AMOY_RPC_URL=(https://rpc-amoy.polygon.technology/)
 POLYGONSCAN_API_KEY=your_api_key
 ```
 
